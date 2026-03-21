@@ -45,6 +45,52 @@ flowchart LR
     mq -->|events| rating
 ```
 
+### Схема базы данных (PostgreSQL)
 
-
-
+```mermaid
+erDiagram
+    USERS ||--o{ PROFILES : "has one"
+    PROFILES ||--|| USER_RATINGS : "has exactly one"
+    PROFILES ||--o{ LIKES : "receives"
+    USERS ||--o{ LIKES : "gives"
+    USERS ||--o{ MATCHES : "initiates as user1"
+    USERS ||--o{ MATCHES : "receives as user2"
+    PROFILES {
+        bigint id PK
+        bigint user_id FK
+        text gender
+        smallint age
+        text city
+        text bio
+        text[] interests
+        text[] photos
+        int completeness "generated"
+        timestamptz updated_at
+    }
+    USER_RATINGS {
+        bigint profile_id PK,FK
+        int primary_score
+        int behavioral_score
+        int combined_score "generated"
+        timestamptz last_calculated_at
+    }
+    LIKES {
+        bigint id PK
+        bigint from_user_id FK
+        bigint to_profile_id FK
+        boolean is_like
+        timestamptz created_at
+    }
+    MATCHES {
+        bigint id PK
+        bigint user1_id FK
+        bigint user2_id FK
+        timestamptz created_at
+    }
+    USERS {
+        bigint id PK
+        bigint telegram_id UK
+        text username
+        timestamptz created_at
+        boolean is_active
+    }
