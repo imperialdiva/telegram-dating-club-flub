@@ -1,44 +1,27 @@
+import os
 import asyncio
 import logging
-import httpx
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
-from os import getenv
 
-TOKEN = "твой_токен"
-BACKEND_URL = "http://localhost:8000/users/register"
+logging.basicConfig(level=logging.INFO)
+
+raw_token = os.getenv("BOT_TOKEN")
+TOKEN = raw_token.strip() if raw_token else None
+
+if not TOKEN:
+    raise ValueError("token miss")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 @dp.message(CommandStart())
-async def command_start_handler(message: types.Message):
-    tg_id = message.from_user.id
-    username = message.from_user.username
-
-    # Отправляем данные на бэкенд
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                BACKEND_URL, 
-                json={"telegram_id": tg_id, "username": username}
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data["status"] == "success":
-                    await message.answer("Добро пожаловать в Dating Club! Вы успешно зарегистрированы.")
-                else:
-                    await message.answer("С возвращением!")
-            else:
-                await message.answer("Ошибка связи с сервером.")
-        except Exception as e:
-            logging.error(f"Error: {e}")
-            await message.answer("Произошла ошибка при регистрации.")
+async def cmd_start(message: types.Message):
+    await message.answer(f"Привет, {message.from_user.full_name}! Бот в работает!")
 
 async def main():
+    logging.info("Бот запускается...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     asyncio.run(main())
