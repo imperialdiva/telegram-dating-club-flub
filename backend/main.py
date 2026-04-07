@@ -18,6 +18,7 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
+    
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     telegram_id = Column(BigInteger, unique=True, nullable=False, index=True)
