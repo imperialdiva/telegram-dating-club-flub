@@ -1,23 +1,4 @@
-version: '3.8'
-
 services:
-  backend:
-    build: ./backend
-    container_name: dating_backend
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/dating_db
-
-  bot:
-    build: ./bot
-    container_name: dating_bot
-    depends_on:
-      - backend
-    environment:
-      - BACKEND_URL=http://backend:8000/users/register
-      - BOT_TOKEN=8700490908:AAH6RefsDsUcFXodueWOaotBjp8t-hl6_5s
-
   db:
     image: postgres:15
     container_name: dating_db
@@ -27,4 +8,41 @@ services:
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: dating_db
     ports:
-      - "5433:5432"
+      - "5433:5432"  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d dating_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dating_network
+
+  backend:
+    build: ./backend
+    container_name: dating_backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy  
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:pass@db:5432/dating_db
+    ports:
+      - "8000:8000"
+    networks:
+      - dating_network
+
+  bot:
+    build: ./bot
+    container_name: dating_bot
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BACKEND_URL=http://backend:8000
+    networks:
+      - dating_network
+
+networks:
+  dating_network:
+    driver: bridge
