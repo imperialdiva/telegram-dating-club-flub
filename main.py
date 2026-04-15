@@ -14,7 +14,7 @@ DATABASE_URL = f"postgresql://{user}:{password}@{host}:5432/{db_name}"
 engine = create_engine(DATABASE_URL)
 Session = sessionmaker(bind=engine)
 
-def run_scenarios():
+def main():
     time.sleep(5) 
     Base.metadata.create_all(engine)
     session = Session()
@@ -57,4 +57,4 @@ def run_scenarios():
         session.close()
 
 if __name__ == "__main__":
-    run_scenarios()
+    main()
