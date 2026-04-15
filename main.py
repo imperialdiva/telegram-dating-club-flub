@@ -20,7 +20,7 @@ def main():
     session = Session()
 
     try:
-        cust = Customer(first_name="Ivan", last_name="Ivanov", email="ivan@mail.com")
+        cust = Customer(first_name="sago", last_name="madjik", email="madjik@mail.com")
         prod = Product(product_name="Laptop", price=1000.0)
         session.add_all([cust, prod])
         session.commit()
@@ -39,8 +39,8 @@ def main():
         print("1 готов")
 
         print("Второй сценарий")
-        customer_to_update = session.query(Customer).filter_by(first_name="Ivan").first()
-        customer_to_update.email = "new_ivan@mail.com"
+        customer_to_update = session.query(Customer).filter_by(first_name="sago").first()
+        customer_to_update.email = "new_madjik@mail.com"
         session.commit()
         print("12 готов")
 
