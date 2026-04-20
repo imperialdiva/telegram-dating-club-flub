@@ -29,6 +29,10 @@
 
 ## 2. СВОДНАЯ ТАБЛИЦА РЕЗУЛЬТАТОВ
 
+### RabbitMQ
+
+![RabbitMQ Queue](report.png)
+
 ### Базовое сравнение (1 KB, цель 1 000 msg/sec)
 
 | Метрика             | RabbitMQ  | Redis      |
