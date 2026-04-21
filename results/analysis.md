@@ -31,7 +31,7 @@
 
 ### RabbitMQ
 
-![RabbitMQ Queue](report.png)
+![RabbitMQ Queue](report1.png)
 
 ### Базовое сравнение (1 KB, цель 1 000 msg/sec)
 

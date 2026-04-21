@@ -1,7 +1,3 @@
-"""
-Генерация отчёта: вывод таблиц через rich и сохранение results/report.csv.
-"""
-
 import csv
 import os
 from typing import TYPE_CHECKING, List
