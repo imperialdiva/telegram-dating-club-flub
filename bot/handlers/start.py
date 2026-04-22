@@ -2,32 +2,31 @@ import httpx
 import logging
 from aiogram import Router, types
 from aiogram.filters import CommandStart
+from keyboards.main_kb import main_kb
 from config import config
 
 router = Router()
 
 @router.message(CommandStart())
 async def cmd_start(message: types.Message):
-    await message.answer("Регистрирую тебя в системе...")
-    
     async with httpx.AsyncClient() as client:
         try:
-            response = await client.post(
+            await client.post(
                 f"{config.BACKEND_URL}/register",
                 params={
-                    "tg_id": message.from_user.id, 
+                    "tg_id": message.from_user.id,
                     "username": message.from_user.username,
                     "first_name": message.from_user.first_name
-                }
+                },
+                timeout=5.0
             )
-            if response.status_code == 200:
-                res_data = response.json()
-                if res_data.get("status") == "success":
-                    await message.answer("Готово! Ты в базе.")
-                else:
-                    await message.answer("Ты уже был зарегистрирован ранее.")
-            else:
-                await message.answer("Ошибка бэкенда.")
         except Exception as e:
-            logging.error(f"Ошибка связи: {e}")
-            await message.answer("Бэкенд недоступен.")
+            logging.error(f"Ошибка регистрации при старте: {e}")
+
+    await message.answer(
+        f"Привет, {message.from_user.first_name}! 👋\n\n"
+        "Добро пожаловать в <b>Club Flub</b>.\n"
+        "Заполни анкету и начни знакомиться!",
+        parse_mode="HTML",
+        reply_markup=main_kb()
+    )
