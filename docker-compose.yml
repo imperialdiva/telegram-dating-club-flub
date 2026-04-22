@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15
-    container_name: dating_db
+    image: ${POSTGRES_IMAGE:-postgres:15}
+    container_name: ${CONTAINER_DB_NAME:-dating_db}
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_HOST_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
@@ -18,33 +16,87 @@ services:
       retries: 5
     networks:
       - dating_network
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: ${CONTAINER_REDIS_NAME:-dating_redis}
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - dating_network
 
   backend:
     build: ./backend
-    container_name: dating_backend
+    container_name: ${CONTAINER_BACKEND_NAME:-dating_backend}
     restart: always
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
     ports:
-      - "8000:8000"
+      - "${BACKEND_HOST_PORT:-8000}:8000"
+    networks:
+      - dating_network
+
+  celery_worker:
+    build: ./backend
+    container_name: ${CONTAINER_CELERY_WORKER_NAME:-dating_celery_worker}
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "celery_app.celery_app", "worker", "--pool=solo", "--loglevel=info"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
+    networks:
+      - dating_network
+
+  celery_beat:
+    build: ./backend
+    container_name: ${CONTAINER_CELERY_BEAT_NAME:-dating_celery_beat}
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["celery", "-A", "celery_app.celery_app", "beat", "--loglevel=info"]
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/0}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/1}
     networks:
       - dating_network
 
   bot:
     build: ./bot
-    container_name: dating_bot
+    container_name: ${CONTAINER_BOT_NAME:-dating_bot}
     restart: always
     depends_on:
       - backend
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
-      - BACKEND_URL=http://backend:8000
+      - BACKEND_URL=${BACKEND_URL:-http://backend:8000}
     networks:
       - dating_network
 
 networks:
   dating_network:
-    driver: bridge
+    name: ${NETWORK_NAME:-dating_network}
+    driver: ${NETWORK_DRIVER:-bridge}
