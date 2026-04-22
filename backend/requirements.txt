@@ -2,3 +2,6 @@ fastapi
 uvicorn
 sqlalchemy
 asyncpg
+pydantic
+redis
+celery
