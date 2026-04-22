@@ -14,8 +14,6 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set!")
 
 
-# Celery tasks run async code from a synchronous worker process. NullPool avoids
-# reusing asyncpg connections that were created on a different event loop.
 engine = create_async_engine(DATABASE_URL, echo=False, poolclass=NullPool)
 AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 Base = declarative_base()
