@@ -30,7 +30,7 @@ def tx1():
     print("[TX1] Старт транзакции")
     cur.execute("UPDATE accounts SET balance = 9999 WHERE id = 1")
     print("[TX1] Баланс изменён на 9999 — НЕ зафиксировано")
-    time.sleep(2)          # TX2 читает в этот момент
+    time.sleep(2)         
     conn.rollback()
     print("[TX1] ROLLBACK — изменения отменены")
     cur.close()
@@ -38,9 +38,8 @@ def tx1():
 
 
 def tx2():
-    time.sleep(0.5)        # Ждём, пока TX1 сделает UPDATE
+    time.sleep(0.5)        
     conn = get_conn()
-    # PostgreSQL READ UNCOMMITTED фактически = READ COMMITTED, dirty read невозможен
     conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_READ_UNCOMMITTED)
     cur = conn.cursor()
     print("[TX2] Старт транзакции (уровень: READ UNCOMMITTED)")
@@ -48,9 +47,9 @@ def tx2():
     balance = cur.fetchone()[0]
     print(f"[TX2] Прочитанный баланс: {balance}")
     if balance == 9999:
-        print("[TX2] ⚠️  DIRTY READ: видны незафиксированные данные TX1!")
+        print("[TX2]  DIRTY READ: видны незафиксированные данные TX1!")
     else:
-        print("[TX2] ✓  Dirty Read не произошёл — PostgreSQL защищает даже на READ UNCOMMITTED")
+        print("[TX2]  Dirty Read не произошёл — PostgreSQL защищает даже на READ UNCOMMITTED")
     conn.commit()
     cur.close()
     conn.close()
