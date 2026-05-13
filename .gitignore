@@ -1,0 +1,6 @@
+db_config.py
+sql-isolation-practice
+.venv/
+__pycache__/
+*.pyc
+*.pyo
