@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm /Users/imperial_diva/telegram-dating-club-flub/db_config.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(lsof -nP -iTCP:5433 -sTCP:LISTEN)",
+      "Bash(docker compose *)",
+      "Bash(nc -z -v localhost 5433)",
+      "Bash(docker port *)"
+    ],
+    "additionalDirectories": [
+      "/Users/imperial_diva/telegram-dating-club-flub"
+    ]
+  }
+}

@@ -9,9 +9,10 @@ from sqlalchemy import (
     Float,
     Integer,
     String,
+    Text,
     UniqueConstraint,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import ARRAY, UUID
 
 from db import Base
 
@@ -26,12 +27,17 @@ class User(Base):
     age = Column(BigInteger, nullable=True)
     gender = Column(String, nullable=True)
     photo_id = Column(String, nullable=True)
+    photos = Column(ARRAY(Text), nullable=False, default=list, server_default="{}")
+    interests = Column(ARRAY(Text), nullable=False, default=list, server_default="{}")
     city = Column(String, nullable=True)
     bio = Column(String, nullable=True)
     preferred_gender = Column(String, nullable=True)
     preferred_city = Column(String, nullable=True)
     preferred_age_min = Column(Integer, nullable=True)
     preferred_age_max = Column(Integer, nullable=True)
+    referrer_tg_id = Column(BigInteger, nullable=True, index=True)
+    referrals_count = Column(Integer, nullable=False, default=0, server_default="0")
+    last_active_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -63,6 +69,7 @@ class Match(Base):
     user1_tg_id = Column(BigInteger, nullable=False, index=True)
     user2_tg_id = Column(BigInteger, nullable=False, index=True)
     dialog_started = Column(Boolean, nullable=False, default=False)
+    dialog_started_by = Column(BigInteger, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -73,9 +80,22 @@ class UserRating(Base):
     telegram_id = Column(BigInteger, unique=True, nullable=False, index=True)
     primary_score = Column(Float, nullable=False, default=0.0)
     behavioral_score = Column(Float, nullable=False, default=0.0)
+    referral_score = Column(Float, nullable=False, default=0.0, server_default="0")
+    activity_score = Column(Float, nullable=False, default=0.0, server_default="0")
     combined_score = Column(Float, nullable=False, default=0.0)
     likes_received = Column(Integer, nullable=False, default=0)
     skips_received = Column(Integer, nullable=False, default=0)
     matches_count = Column(Integer, nullable=False, default=0)
     dialogs_started = Column(Integer, nullable=False, default=0)
     last_calculated_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ActivityHourly(Base):
+    """Гистограмма активности юзера по часам (UTC)."""
+    __tablename__ = "user_activity_hourly"
+    __table_args__ = (UniqueConstraint("telegram_id", "hour", name="uq_activity_hour"),)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    telegram_id = Column(BigInteger, nullable=False, index=True)
+    hour = Column(Integer, nullable=False)
+    count = Column(Integer, nullable=False, default=0)

@@ -8,8 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from cache import delete_queue, init_redis
 from celery_app import celery_app
 from db import AsyncSessionLocal
-from models import Like, Match, Skip, User, UserRating
-from rating import calculate_behavioral_score, calculate_primary_score, combine_scores
+from models import ActivityHourly, Like, Match, Skip, User, UserRating
+from rating import (
+    calculate_activity_score,
+    calculate_behavioral_score,
+    calculate_primary_score,
+    calculate_referral_score,
+    combine_scores,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -58,6 +64,15 @@ async def recalculate_user_rating_async(
             or 0
         )
 
+        activity_rows = (
+            await session.execute(
+                select(ActivityHourly.hour, ActivityHourly.count).where(
+                    ActivityHourly.telegram_id == tg_id
+                )
+            )
+        ).all()
+        activity_by_hour = {int(hour): int(cnt) for hour, cnt in activity_rows}
+
         primary_score = calculate_primary_score(user)
         behavioral_score = calculate_behavioral_score(
             likes_received=likes_received,
@@ -65,7 +80,17 @@ async def recalculate_user_rating_async(
             matches_count=matches_count,
             dialogs_started=dialogs_started,
         )
-        combined_score = combine_scores(primary_score, behavioral_score)
+        referral_score = calculate_referral_score(int(user.referrals_count or 0))
+        activity_score = calculate_activity_score(
+            activity_by_hour=activity_by_hour,
+            last_active_at=user.last_active_at,
+        )
+        combined_score = combine_scores(
+            primary_score,
+            behavioral_score,
+            referral_score,
+            activity_score,
+        )
 
         rating = await session.scalar(
             select(UserRating).where(UserRating.telegram_id == tg_id)
@@ -76,6 +101,8 @@ async def recalculate_user_rating_async(
 
         rating.primary_score = primary_score
         rating.behavioral_score = behavioral_score
+        rating.referral_score = referral_score
+        rating.activity_score = activity_score
         rating.combined_score = combined_score
         rating.likes_received = likes_received
         rating.skips_received = skips_received

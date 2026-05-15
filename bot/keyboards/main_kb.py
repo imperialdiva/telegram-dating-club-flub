@@ -1,5 +1,5 @@
-from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram import types
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
 
 
 def main_kb():
@@ -8,5 +8,8 @@ def main_kb():
         types.KeyboardButton(text="👤 Моя анкета"),
         types.KeyboardButton(text="🔍 Смотреть анкеты"),
     )
-    builder.row(types.KeyboardButton(text="⚙️ Настройки"))
+    builder.row(
+        types.KeyboardButton(text="💞 Мои мэтчи"),
+        types.KeyboardButton(text="⚙️ Настройки"),
+    )
     return builder.as_markup(resize_keyboard=True)
